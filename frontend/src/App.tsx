@@ -32,7 +32,7 @@ export default function App() {
     return () => ws.close()
   }, [])
   useEffect(() => {
-    socket.current?.send(JSON.stringify({ type: 'filter', filter: { protocol: filters.protocol || null, ip: filters.ip || null, port: filters.port ? Number(filters.port) : null } }))
+    if (socket.current?.readyState === WebSocket.OPEN) { try { socket.current.send(JSON.stringify({ type: 'filter', filter: { protocol: filters.protocol || null, ip: filters.ip || null, port: filters.port ? Number(filters.port) : null } })) } catch { /* ignored */ } }
     const params = new URLSearchParams(); if (filters.protocol) params.set('protocol', filters.protocol); if (filters.ip) params.set('ip', filters.ip); if (filters.port) params.set('port', filters.port)
     fetch(`${API}/api/packets?${params}`).then(r => r.json()).then(data => setPackets(data.packets)).catch(() => undefined)
   }, [filters])
