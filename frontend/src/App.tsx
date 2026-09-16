@@ -1,6 +1,5 @@
 import { useEffect, useRef, useState } from 'react'
 
-const API = 'http://127.0.0.1:8000'
 const MAX_ROWS = 250
 
 type Packet = { timestamp: string; src_mac?: string; dst_mac?: string; src_ip?: string; dst_ip?: string; src_port?: number; dst_port?: number; protocol: string; length: number; tcp_flags?: string; anomalies: string[] }
@@ -19,14 +18,15 @@ export default function App() {
   const socket = useRef<WebSocket | null>(null)
 
   const refreshStats = async () => {
-    try { setStats(await (await fetch(`${API}/api/stats`)).json()) } catch { setError('Backend unavailable. Start the FastAPI server first.') }
+    try { setStats(await (await fetch(`/api/stats`)).json()) } catch { setError('Backend unavailable. Start the FastAPI server first.') }
   }
   useEffect(() => {
-    fetch(`${API}/api/interfaces`).then(r => r.json()).then(data => { setInterfaces(data.interfaces); setSelectedInterface(data.default || '') }).catch(() => setError('Could not load interfaces.'))
+    fetch(`/api/interfaces`).then(r => r.json()).then(data => { setInterfaces(data.interfaces); setSelectedInterface(data.default || '') }).catch(() => setError('Could not load interfaces.'))
     refreshStats(); const timer = window.setInterval(refreshStats, 1000); return () => window.clearInterval(timer)
   }, [])
   useEffect(() => {
-    const ws = new WebSocket('ws://127.0.0.1:8000/ws/packets'); socket.current = ws
+    const wsProtocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
+    const ws = new WebSocket(`${wsProtocol}//${window.location.host}/ws/packets`); socket.current = ws
     ws.onmessage = event => { const message = JSON.parse(event.data); if (message.type === 'packet') setPackets(rows => [message.packet, ...rows].slice(0, MAX_ROWS)) }
     ws.onerror = () => setError('Live connection interrupted.')
     return () => ws.close()
@@ -34,12 +34,12 @@ export default function App() {
   useEffect(() => {
     if (socket.current?.readyState === WebSocket.OPEN) { try { socket.current.send(JSON.stringify({ type: 'filter', filter: { protocol: filters.protocol || null, ip: filters.ip || null, port: filters.port ? Number(filters.port) : null } })) } catch { /* ignored */ } }
     const params = new URLSearchParams(); if (filters.protocol) params.set('protocol', filters.protocol); if (filters.ip) params.set('ip', filters.ip); if (filters.port) params.set('port', filters.port)
-    fetch(`${API}/api/packets?${params}`).then(r => r.json()).then(data => setPackets(data.packets)).catch(() => undefined)
+    fetch(`/api/packets?${params}`).then(r => r.json()).then(data => setPackets(data.packets)).catch(() => undefined)
   }, [filters])
 
   async function control(action: 'start' | 'stop') {
     setError('')
-    const response = await fetch(`${API}/api/capture/${action}`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: action === 'start' ? JSON.stringify({ interface: selectedInterface || null }) : undefined })
+    const response = await fetch(`/api/capture/${action}`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: action === 'start' ? JSON.stringify({ interface: selectedInterface || null }) : undefined })
     if (!response.ok) { const data = await response.json(); setError(data.detail || 'Capture control failed.') }
     await refreshStats()
   }
