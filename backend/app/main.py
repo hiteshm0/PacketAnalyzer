@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import asyncio
+from collections.abc import AsyncIterator
 from contextlib import asynccontextmanager, suppress
 from queue import Empty, Queue
 from typing import Any
@@ -63,7 +64,7 @@ async def dispatch_packets() -> None:
 
 
 @asynccontextmanager
-async def lifespan(_: FastAPI):
+async def lifespan(_: FastAPI) -> AsyncIterator[None]:
     task = asyncio.create_task(dispatch_packets())
     yield
     capture.stop()

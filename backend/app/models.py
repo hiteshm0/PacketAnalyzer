@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 from dataclasses import asdict, dataclass, field
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from typing import Any
 
 
@@ -30,4 +30,4 @@ class ParsedPacket:
 
 def utc_timestamp(epoch: float | None = None) -> str:
     """Return a frontend-safe, timezone-aware timestamp."""
-    return datetime.fromtimestamp(epoch, tz=timezone.utc).isoformat() if epoch else datetime.now(timezone.utc).isoformat()
+    return datetime.fromtimestamp(epoch, tz=UTC).isoformat() if epoch else datetime.now(UTC).isoformat()

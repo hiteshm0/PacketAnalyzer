@@ -3,8 +3,9 @@
 from __future__ import annotations
 
 from collections import Counter, deque
-from datetime import datetime, timedelta, timezone
+from datetime import UTC, datetime, timedelta
 from threading import Lock
+from typing import Any
 
 from .anomaly import AnomalyDetector
 from .models import ParsedPacket
@@ -25,16 +26,16 @@ class PacketStore:
             self._packets.append(packet)
         return packet
 
-    def packets(self, protocol: str | None = None, ip: str | None = None, port: int | None = None, limit: int = 250) -> list[dict]:
+    def packets(self, protocol: str | None = None, ip: str | None = None, port: int | None = None, limit: int = 250) -> list[dict[str, Any]]:
         with self._lock:
             values = list(self._packets)
         values = [packet for packet in values if matches_filter(packet, protocol, ip, port)]
         return [packet.to_dict() for packet in values[-min(max(limit, 1), self.capacity):]][::-1]
 
-    def stats(self) -> dict:
+    def stats(self) -> dict[str, Any]:
         with self._lock:
             values = list(self._packets)
-        now = datetime.now(timezone.utc)
+        now = datetime.now(UTC)
         recent = [packet for packet in values if _packet_time(packet) >= now - timedelta(seconds=1)]
         protocols = Counter(_protocol_bucket(packet.protocol) for packet in values)
         total = len(values)
@@ -67,7 +68,7 @@ def _packet_time(packet: ParsedPacket) -> datetime:
     try:
         return datetime.fromisoformat(packet.timestamp)
     except (TypeError, ValueError):
-        return datetime.min.replace(tzinfo=timezone.utc)
+        return datetime.min.replace(tzinfo=UTC)
 
 
 def _protocol_bucket(protocol: str) -> str:

@@ -7,8 +7,8 @@ from threading import Event, Lock, Thread
 
 from scapy.all import get_if_list, sniff
 
-from .parser import parse_packet
 from .models import ParsedPacket
+from .parser import parse_packet
 
 
 def interfaces() -> list[str]:

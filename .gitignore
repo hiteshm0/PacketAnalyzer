@@ -10,3 +10,7 @@ frontend/vite.config.d.ts
 .DS_Store
 INTERVIEW.md
 .vscode
+.coverage
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/

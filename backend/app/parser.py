@@ -7,7 +7,7 @@ single bad frame cannot interrupt the capture thread.
 
 from __future__ import annotations
 
-from scapy.all import ARP, Ether, ICMP, IP, IPv6, TCP, UDP
+from scapy.all import ARP, ICMP, IP, TCP, UDP, Ether, IPv6
 from scapy.packet import Packet
 
 from .models import ParsedPacket, utc_timestamp
